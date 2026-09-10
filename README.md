@@ -138,22 +138,17 @@ attendance_report_system/
 ### Prerequisites
 - Python 3.9 or higher installed on your system.
 
-### Step 1: Navigate to the Project Directory
-```bash
-cd "C:\Users\Riddhima Mali\.gemini\antigravity\scratch\attendance_report_system"
-```
-
-### Step 2: Install Required Dependencies
+### Step 1: Install Required Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 3: Run the Application
+### Step 2: Run the Application
 ```bash
 python app.py
 ```
 
-### Step 4: Open in Web Browser
+### Step 3: Open in Web Browser
 Open your browser and navigate to:
 ```
 http://127.0.0.1:5000
