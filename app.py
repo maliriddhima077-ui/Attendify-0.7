@@ -1046,7 +1046,7 @@ if __name__ == '__main__':
     print("==================================================================")
     print(" Attendify — Primary School Attendance & Performance System")
     print(" Standards 1-6 | Divisions A & B")
-    print(" Server running at: http://127.0.0.1:5000")
+    print(" Server running at: http://127.0.0.1:10000")
     print(" Principal Login:      admin      / admin123")
     print(" Class Teacher (3-A):  teacher3a  / teach123")
     print("==================================================================")
