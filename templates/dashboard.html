@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Attendify Analytics{% endblock %}
+{% block page_title %}Institutional Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-hero hero-band animate-fade-in-up">
+    <div>
+        <h2 class="text-main">Welcome back, {{ session.get('full_name', 'Administrator') }}! 👋</h2>
+        <p class="text-muted">
+            Real-time attendance tracking and academic performance insights for <strong class="text-main">{{ system_settings.academic_year }}</strong>.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('attendance_view') }}" class="quick-action quick-action-primary">
+            <i class="bi bi-calendar-check"></i> Mark Attendance
+        </a>
+        <a href="{{ url_for('add_student_view') }}" class="quick-action quick-action-ghost">
+            <i class="bi bi-person-plus"></i> Add Student
+        </a>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- 6 EXECUTIVE KPI SUMMARY CARDS                                              -->
+<!-- ========================================================================== -->
+<div class="row g-3 mb-4">
+    <!-- 1. Total Students -->
+    <div class="col-12 col-sm-6 col-xl-2 animate-fade-in-up stagger-1">
+        <div class="stat-card stat-primary h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Total Students</div>
+                <div class="stat-value">{{ metrics.total_students }}</div>
+                <span class="stat-badge" style="background: var(--primary-light); color: var(--primary);">
+                    <i class="bi bi-mortarboard"></i> Active Roster
+                </span>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-people-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Present Today -->
+    <div class="col-12 col-sm-6 col-xl-2 animate-fade-in-up stagger-2">
+        <div class="stat-card stat-success h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Present Today</div>
+                <div class="stat-value">{{ metrics.present_today }}</div>
+                <span class="stat-badge" style="background: var(--success-light); color: var(--success);">
+                    <i class="bi bi-check2-circle"></i> {{ metrics.effective_date[-5:] }}
+                </span>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-person-check-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Absent Today -->
+    <div class="col-12 col-sm-6 col-xl-2 animate-fade-in-up stagger-3">
+        <div class="stat-card stat-danger h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Absent Today</div>
+                <div class="stat-value">{{ metrics.absent_today }}</div>
+                <span class="stat-badge" style="background: var(--danger-light); color: var(--danger);">
+                    <i class="bi bi-x-circle"></i> {{ metrics.late_today }} Late
+                </span>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-person-x-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Average Attendance -->
+    <div class="col-12 col-sm-6 col-xl-2 animate-fade-in-up stagger-4">
+        <div class="stat-card stat-info h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Avg Attendance</div>
+                <div class="stat-value">{{ metrics.avg_attendance }}%</div>
+                <span class="stat-badge" style="background: var(--info-light); color: var(--info);">
+                    <i class="bi bi-percent"></i> Term Aggregate
+                </span>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-graph-up"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Average Performance -->
+    <div class="col-12 col-sm-6 col-xl-2 animate-fade-in-up stagger-5">
+        <div class="stat-card stat-primary h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Avg Performance</div>
+                <div class="stat-value">{{ metrics.avg_performance }}%</div>
+                <span class="stat-badge" style="background: var(--primary-light); color: var(--primary);">
+                    <i class="bi bi-award"></i> Exam Average
+                </span>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-trophy-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. At Risk Students -->
+    <div class="col-12 col-sm-6 col-xl-2 animate-fade-in-up stagger-6">
+        <div class="stat-card stat-warning h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Students at Risk</div>
+                <div class="stat-value">{{ metrics.at_risk_count }}</div>
+                <span class="stat-badge" style="background: var(--danger-light); color: var(--danger);">
+                    <i class="bi bi-exclamation-triangle"></i> &lt; 75% Threshold
+                </span>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-shield-exclamation"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- CHART ROW 1: ATTENDANCE DISTRIBUTION & MONTHLY TREND                      -->
+<!-- ========================================================================== -->
+<div class="row g-4 mb-4 animate-fade-in-up stagger-2">
+    <div class="col-12 col-lg-4">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-pie-chart-fill text-primary"></i> Attendance Overview
+                </h5>
+                <span class="badge bg-subtle text-muted border">All Records</span>
+            </div>
+            <div class="card-body-modern d-flex flex-column justify-content-center align-items-center" style="min-height: 280px;">
+                <div style="position: relative; width: 100%; height: 240px;">
+                    <canvas id="chartAttendancePie"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-8">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-graph-up-arrow text-primary"></i> Monthly Attendance Trend
+                </h5>
+                <span class="badge bg-subtle text-muted border">Historical</span>
+            </div>
+            <div class="card-body-modern" style="min-height: 280px;">
+                <div style="position: relative; width: 100%; height: 240px;">
+                    <canvas id="chartMonthlyTrend"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- CHART ROW 2: PERFORMANCE TIERS & SUBJECT AVERAGES                          -->
+<!-- ========================================================================== -->
+<div class="row g-4 mb-4 animate-fade-in-up stagger-3">
+    <div class="col-12 col-lg-6">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-bar-chart-steps text-info"></i> Performance Distribution
+                </h5>
+                <span class="badge bg-subtle text-muted border">Student Tiers</span>
+            </div>
+            <div class="card-body-modern" style="min-height: 280px;">
+                <div style="position: relative; width: 100%; height: 240px;">
+                    <canvas id="chartPerformanceDist"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-journal-bookmark-fill text-primary"></i> Subject Performance Averages
+                </h5>
+                <span class="badge bg-subtle text-muted border">Comparison</span>
+            </div>
+            <div class="card-body-modern" style="min-height: 280px;">
+                <div style="position: relative; width: 100%; height: 240px;">
+                    <canvas id="chartSubjectPerf"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- CHART ROW 3: ATTENDANCE VS PERFORMANCE CORRELATION                        -->
+<!-- ========================================================================== -->
+<div class="row g-4 mb-4 animate-fade-in-up stagger-4">
+    <div class="col-12">
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-diagram-3-fill text-warning"></i> Attendance vs Academic Performance Correlation
+                </h5>
+                <small class="text-muted">Shows the direct relationship between class attendance % and student exam scores %</small>
+            </div>
+            <div class="card-body-modern" style="min-height: 300px;">
+                <div style="position: relative; width: 100%; height: 270px;">
+                    <canvas id="chartCorrelation"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- AT-RISK STUDENTS & RECENT ACTIVITY FEED                                   -->
+<!-- ========================================================================== -->
+<div class="row g-4 animate-fade-in-up stagger-5">
+    <!-- Students At-Risk Table -->
+    <div class="col-12 col-lg-7">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-shield-slash-fill text-danger"></i> Students Below Attendance Threshold (&lt; 75%)
+                </h5>
+                <a href="{{ url_for('attendance_analysis') }}" class="btn btn-sm btn-outline-modern">View All</a>
+            </div>
+            <div class="card-body-modern p-0">
+                {% if at_risk_students %}
+                    <div class="table-responsive">
+                        <table class="table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Roll No</th>
+                                    <th>Class</th>
+                                    <th>Attendance</th>
+                                    <th>Risk Level</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for st in at_risk_students %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ st.name }}</div>
+                                        <small class="text-muted">{{ st.email }}</small>
+                                    </td>
+                                    <td><code class="fw-semibold">{{ st.roll }}</code></td>
+                                    <td>{{ st.class_name }} - {{ st.division }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress-modern flex-grow-1" style="width: 60px;">
+                                                <div class="progress-bar bg-{{ st.risk_badge }}" style="width: {{ st.attendance_pct }}%;"></div>
+                                            </div>
+                                            <span class="fw-bold text-{{ st.risk_badge }}">{{ st.attendance_pct }}%</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge-status {{ st.risk_badge }}">
+                                            {{ st.risk_level }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ url_for('student_profile', student_id=st.id) }}" class="btn btn-sm btn-outline-modern py-1 px-2" title="View Profile">
+                                            <i class="bi bi-arrow-right"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon text-success" style="background: var(--success-light);">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="empty-state-title">All Students in Good Standing</div>
+                        <div class="empty-state-text">No students currently fall below the required 75% attendance threshold.</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Timeline -->
+    <div class="col-12 col-lg-5">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-activity text-primary"></i> System Activity Log
+                </h5>
+                <span class="badge bg-subtle text-muted border">Live Feed</span>
+            </div>
+            <div class="card-body-modern">
+                {% if recent_activities %}
+                    <ul class="activity-feed">
+                        {% for act in recent_activities %}
+                        <li class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div class="activity-title">{{ act.action_type }}: {{ act.description }}</div>
+                            <div class="activity-time">By {{ act.user }} &bull; {{ act.created_at }}</div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state py-4">
+                        <i class="bi bi-clock-history fs-2 text-muted mb-2"></i>
+                        <div class="empty-state-title">No Recent Activity</div>
+                        <div class="empty-state-text">Actions such as marking attendance or adding students will be logged here.</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Embed dynamic Chart.js JSON payload into window scope
+    window.DASHBOARD_CHARTS_DATA = {{ charts_data | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

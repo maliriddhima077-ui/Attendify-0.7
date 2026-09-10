@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Students Roster — Attendify Analytics{% endblock %}
+{% block page_title %}Student Management{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-main mb-1">Student Directory</h3>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Manage enrolled students, monitor their real-time attendance %, and inspect performance grades.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('export_students_csv') }}" class="btn btn-outline-modern">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+        </a>
+        <a href="{{ url_for('add_student_view') }}" class="btn btn-primary-modern">
+            <i class="bi bi-person-plus-fill"></i> Add New Student
+        </a>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- FILTER & SEARCH CONTROL BAR                                                -->
+<!-- ========================================================================== -->
+<div class="card-modern mb-4">
+    <div class="card-body-modern py-3">
+        <form method="GET" action="{{ url_for('students_list') }}" class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label">Search Query</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-subtle"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Name, Roll, Email..." value="{{ search }}">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label">Class</label>
+                <select name="class_name" class="form-select">
+                    <option value="">All Classes</option>
+                    {% for c in classes %}
+                        <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label">Division</label>
+                <select name="division" class="form-select">
+                    <option value="">All Divisions</option>
+                    {% for d in divisions %}
+                        <option value="{{ d }}" {% if selected_division == d %}selected{% endif %}>Division {{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label">Attendance Status</label>
+                <select name="attendance_status" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="Excellent" {% if selected_att_status == 'Excellent' %}selected{% endif %}>Excellent (≥90%)</option>
+                    <option value="Good" {% if selected_att_status == 'Good' %}selected{% endif %}>Good (75-89%)</option>
+                    <option value="Warning" {% if selected_att_status == 'Warning' %}selected{% endif %}>Warning (60-74%)</option>
+                    <option value="Critical" {% if selected_att_status == 'Critical' %}selected{% endif %}>Critical (&lt;60%)</option>
+                </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label">Performance Grade</label>
+                <select name="performance_grade" class="form-select">
+                    <option value="">All Grades</option>
+                    {% for g in ['A+', 'A', 'B+', 'B', 'C', 'D', 'F'] %}
+                        <option value="{{ g }}" {% if selected_grade == g %}selected{% endif %}>Grade {{ g }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-primary-modern w-100 p-2 justify-content-center" title="Apply Filters">
+                    <i class="bi bi-funnel-fill"></i>
+                </button>
+                <a href="{{ url_for('students_list') }}" class="btn btn-outline-modern p-2 justify-content-center" title="Reset Filters">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- STUDENTS DATA TABLE                                                        -->
+<!-- ========================================================================== -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="card-title-modern mb-0">
+                <i class="bi bi-people text-primary"></i> Enrolled Students
+            </h5>
+            <span class="badge bg-primary text-white rounded-pill">{{ students | length }} Records</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <input type="text" id="liveTableSearch" class="form-control form-control-sm" placeholder="Instant table filter..." style="width: 200px;">
+        </div>
+    </div>
+
+    <div class="card-body-modern p-0">
+        {% if students %}
+            <div class="table-responsive">
+                <table class="table-modern table-filterable">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th>Roll Number</th>
+                            <th>Class & Div</th>
+                            <th>Contact Info</th>
+                            <th>Attendance %</th>
+                            <th>Performance %</th>
+                            <th>Grade</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        <tr>
+                            <td><span class="text-muted fw-semibold">#{{ s.id }}</span></td>
+                            <td>
+                                <div class="cell-user">
+                                    <span class="u-avatar">{{ s.name[:1] }}</span>
+                                    <div class="overflow-hidden">
+                                        <a href="{{ url_for('student_profile', student_id=s.id) }}" class="fw-bold text-main d-block text-truncate">
+                                            {{ s.name }}
+                                        </a>
+                                        <small class="text-muted">{{ s.gender }} &bull; {{ s.class_name }}-{{ s.division }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><code class="fw-bold">{{ s.roll }}</code></td>
+                            <td><span class="badge bg-subtle text-main border">{{ s.class_name }} - {{ s.division }}</span></td>
+                            <td>
+                                <div style="font-size: 0.82rem;"><i class="bi bi-envelope me-1 text-muted"></i>{{ s.email }}</div>
+                                <div style="font-size: 0.82rem;" class="text-muted"><i class="bi bi-telephone me-1"></i>{{ s.phone }}</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2" style="min-width: 120px;">
+                                    <div class="progress-modern flex-grow-1">
+                                        <div class="progress-bar bg-{{ s.attendance_badge }}" style="width: {{ s.attendance_pct }}%;"></div>
+                                    </div>
+                                    <span class="badge-status {{ s.attendance_badge }} py-1 px-2">
+                                        {{ s.attendance_pct }}%
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if s.performance_pct is not none %}
+                                    <span class="fw-bold">{{ s.performance_pct }}%</span>
+                                {% else %}
+                                    <span class="text-muted small">No marks</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if s.performance_grade != 'N/A' %}
+                                    <span class="badge-status {% if s.performance_grade in ['A+', 'A'] %}success{% elif s.performance_grade in ['B+', 'B'] %}info{% elif s.performance_grade in ['C', 'D'] %}warning{% else %}danger{% endif %}">
+                                        {{ s.performance_grade }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-subtle text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a href="{{ url_for('student_profile', student_id=s.id) }}" class="btn btn-sm btn-outline-modern p-1 px-2" title="View Profile">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('edit_student_view', student_id=s.id) }}" class="btn btn-sm btn-outline-modern p-1 px-2 text-primary" title="Edit Student">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-modern p-1 px-2 text-danger" title="Delete Student" data-bs-toggle="modal" data-bs-target="#deleteModal{{ s.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Delete Confirmation Modal -->
+                                <div class="modal fade" id="deleteModal{{ s.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                                            <div class="modal-header border-bottom">
+                                                <h6 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Deletion</h6>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <p class="mb-2">Are you sure you want to permanently delete student <strong>{{ s.name }} ({{ s.roll }})</strong>?</p>
+                                                <p class="small text-muted mb-0">This will permanently remove all associated attendance logs and academic performance examination records.</p>
+                                            </div>
+                                            <div class="modal-footer border-top">
+                                                <button type="button" class="btn btn-outline-modern btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                <form method="POST" action="{{ url_for('delete_student_view', student_id=s.id) }}">
+                                                    <button type="submit" class="btn btn-danger btn-sm px-3">Delete Student</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-search"></i>
+                </div>
+                <div class="empty-state-title">No Students Found</div>
+                <div class="empty-state-text">No student profiles match your filter criteria. Try adjusting your search query or reset filters.</div>
+                <a href="{{ url_for('students_list') }}" class="btn btn-outline-modern btn-sm">Reset Filters</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

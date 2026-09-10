@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Academic Gradebook — Attendify Analytics{% endblock %}
+{% block page_title %}Academic Performance & Gradebook{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-main mb-1">Academic Gradebook</h3>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Record, review, and evaluate student marks across internal assessments and external semester examinations.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('performance_analysis') }}" class="btn btn-outline-modern">
+            <i class="bi bi-bar-chart-line-fill"></i> Performance Analytics
+        </a>
+        <a href="{{ url_for('add_performance_view') }}" class="btn btn-primary-modern">
+            <i class="bi bi-plus-circle-fill"></i> Record Student Marks
+        </a>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- FILTER CARD                                                                -->
+<!-- ========================================================================== -->
+<div class="card-modern mb-4">
+    <div class="card-body-modern py-3">
+        <form method="GET" action="{{ url_for('performance_list') }}" class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label">Search Student / Roll</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-subtle"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ search }}">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <label class="form-label">Class</label>
+                <select name="class_name" class="form-select">
+                    <option value="">All Classes</option>
+                    {% for c in classes %}
+                        <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label">Semester</label>
+                <select name="semester" class="form-select">
+                    <option value="">All Semesters</option>
+                    {% for sem in ['Semester I', 'Semester II', 'Semester III', 'Semester IV', 'Semester V', 'Semester VI'] %}
+                        <option value="{{ sem }}" {% if selected_semester == sem %}selected{% endif %}>{{ sem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <label class="form-label">Subject</label>
+                <select name="subject" class="form-select">
+                    <option value="">All Subjects</option>
+                    {% for s in subjects %}
+                        <option value="{{ s }}" {% if selected_subject == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-6 col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-primary-modern w-100 p-2 justify-content-center" title="Filter">
+                    <i class="bi bi-funnel-fill"></i>
+                </button>
+                <a href="{{ url_for('performance_list') }}" class="btn btn-outline-modern p-2 justify-content-center" title="Reset">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- GRADEBOOK TABLE                                                            -->
+<!-- ========================================================================== -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="card-title-modern mb-0">
+                <i class="bi bi-award-fill text-primary"></i> Examination Records Roster
+            </h5>
+            <span class="badge bg-primary text-white rounded-pill">{{ records | length }} Entries</span>
+        </div>
+        <div>
+            <input type="text" id="liveTableSearch" class="form-control form-control-sm" placeholder="Live table filter..." style="width: 200px;">
+        </div>
+    </div>
+
+    <div class="card-body-modern p-0">
+        {% if records %}
+            <div class="table-responsive">
+                <table class="table-modern table-filterable">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Roll No</th>
+                            <th>Class & Div</th>
+                            <th>Subject</th>
+                            <th>Semester</th>
+                            <th>Internal (40)</th>
+                            <th>External (60)</th>
+                            <th>Total (100)</th>
+                            <th>Percentage</th>
+                            <th>Grade</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('student_profile', student_id=r.student_id) }}" class="fw-bold text-main">
+                                    {{ r.student_name }}
+                                </a>
+                            </td>
+                            <td><code>{{ r.roll }}</code></td>
+                            <td><span class="badge bg-subtle text-muted border">{{ r.class_name }} - {{ r.division }}</span></td>
+                            <td class="fw-semibold">{{ r.subject }}</td>
+                            <td><span class="badge bg-subtle text-muted">{{ r.semester }}</span></td>
+                            <td>{{ r.internal_marks }}</td>
+                            <td>{{ r.external_marks }}</td>
+                            <td><strong class="text-primary">{{ r.total_marks }}</strong></td>
+                            <td><strong>{{ r.percentage }}%</strong></td>
+                            <td>
+                                <span class="badge-status {% if r.grade in ['A+', 'A'] %}success{% elif r.grade in ['B+', 'B'] %}info{% elif r.grade in ['C', 'D'] %}warning{% else %}danger{% endif %}">
+                                    {{ r.grade }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a href="{{ url_for('edit_performance_view', record_id=r.id) }}" class="btn btn-sm btn-outline-modern p-1 px-2 text-primary" title="Edit Record">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-modern p-1 px-2 text-danger" title="Delete Record" data-bs-toggle="modal" data-bs-target="#deletePerfModal{{ r.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Delete Confirmation Modal -->
+                                <div class="modal fade" id="deletePerfModal{{ r.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                                            <div class="modal-header border-bottom">
+                                                <h6 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Record Deletion</h6>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <p class="mb-0">Are you sure you want to delete the performance record for <strong>{{ r.student_name }}</strong> ({{ r.subject }} - {{ r.semester }})?</p>
+                                            </div>
+                                            <div class="modal-footer border-top">
+                                                <button type="button" class="btn btn-outline-modern btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                <form method="POST" action="{{ url_for('delete_performance_view', record_id=r.id) }}">
+                                                    <button type="submit" class="btn btn-danger btn-sm px-3">Delete Record</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-journal-x"></i></div>
+                <div class="empty-state-title">No Performance Records Found</div>
+                <div class="empty-state-text">No examination marks match the current filters. Click below to add marks.</div>
+                <a href="{{ url_for('add_performance_view') }}" class="btn btn-primary-modern btn-sm">Record Marks</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

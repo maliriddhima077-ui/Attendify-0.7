@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile.student.name }} — Student Profile & Analytics{% endblock %}
+{% block page_title %}Student Analytics Profile{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-modern">
+    <a href="{{ url_for('dashboard') }}"><i class="bi bi-house me-1"></i> Dashboard</a>
+    <i class="bi bi-chevron-right"></i>
+    <a href="{{ url_for('students_list') }}">Students</a>
+    <i class="bi bi-chevron-right"></i>
+    <span class="active">{{ profile.student.name }}</span>
+</div>
+
+<!-- ========================================================================== -->
+<!-- PROFILE HEADER BANNER                                                      -->
+<!-- ========================================================================== -->
+<div class="card-modern mb-4">
+    <div class="card-body-modern p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-4">
+            <div class="d-flex align-items-center gap-4">
+                <div class="user-avatar" style="width: 72px; height: 72px; font-size: 1.8rem; background: var(--grad-primary); color: #fff; box-shadow: 0 8px 16px rgba(11, 24, 56, 0.35);">
+                    {{ profile.student.name[:2].upper() }}
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h3 class="fw-bold text-main mb-0">{{ profile.student.name }}</h3>
+                        <span class="badge bg-subtle text-primary border fw-bold">{{ profile.student.roll }}</span>
+                        <span class="badge-status success">{{ profile.student.status }}</span>
+                    </div>
+                    <div class="text-muted" style="font-size: 0.9rem;">
+                        <span><i class="bi bi-mortarboard me-1"></i>{{ profile.student.class_name }} - Division {{ profile.student.division }}</span>
+                        <span class="mx-2">&bull;</span>
+                        <span><i class="bi bi-envelope me-1"></i>{{ profile.student.email }}</span>
+                        <span class="mx-2">&bull;</span>
+                        <span><i class="bi bi-telephone me-1"></i>{{ profile.student.phone }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ url_for('report_student', student_id=profile.student.id) }}" class="btn btn-outline-modern" target="_blank">
+                    <i class="bi bi-printer me-1"></i> Print Dossier
+                </a>
+                <a href="{{ url_for('add_performance_view', student_id=profile.student.id) }}" class="btn btn-outline-modern text-primary">
+                    <i class="bi bi-plus-circle me-1"></i> Record Marks
+                </a>
+                <a href="{{ url_for('edit_student_view', student_id=profile.student.id) }}" class="btn btn-primary-modern">
+                    <i class="bi bi-pencil me-1"></i> Edit Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- 4 ANALYTICAL KPI METRIC CARDS                                              -->
+<!-- ========================================================================== -->
+<div class="row g-3 mb-4">
+    <!-- Attendance Rate -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card stat-{{ profile.attendance.risk_color }} h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Attendance Rate</div>
+                <div class="stat-value">{{ profile.attendance.percentage }}%</div>
+                <span class="stat-badge text-{{ profile.attendance.risk_color }}" style="background: var(--{{ profile.attendance.risk_color }}-light);">
+                    <i class="bi bi-shield-check"></i> {{ profile.attendance.risk_level }} Standing
+                </span>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-calendar2-check-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Classes Attended -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card stat-success h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Classes Attended</div>
+                <div class="stat-value">{{ profile.attendance.present }} / {{ profile.attendance.total_classes }}</div>
+                <span class="stat-badge text-success" style="background: var(--success-light);">
+                    <i class="bi bi-person-check"></i> {{ profile.attendance.absent }} Absent &bull; {{ profile.attendance.late }} Late
+                </span>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-check-all"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Academic Average -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card stat-info h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Academic Average</div>
+                <div class="stat-value">{{ profile.performance.avg_percentage }}%</div>
+                <span class="stat-badge text-info" style="background: var(--info-light);">
+                    <i class="bi bi-journal-check"></i> {{ profile.performance.total_subjects }} Subjects Evaluated
+                </span>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-mortarboard-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Grade -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card stat-primary h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Overall Grade</div>
+                <div class="stat-value">{{ profile.performance.overall_grade }}</div>
+                <span class="stat-badge text-primary" style="background: var(--primary-light);">
+                    <i class="bi bi-trophy"></i> GPA Classification
+                </span>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-award-fill"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- CHARTS ROW                                                                 -->
+<!-- ========================================================================== -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-5">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-pie-chart-fill text-primary"></i> Attendance Distribution
+                </h5>
+                <span class="badge bg-subtle text-muted border">Summary</span>
+            </div>
+            <div class="card-body-modern d-flex flex-column align-items-center justify-content-center" style="min-height: 260px;">
+                <div style="position: relative; width: 100%; height: 220px;">
+                    <canvas id="studentProfileAttChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-7">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-bar-chart-fill text-info"></i> Subject Marks Breakdown (%)
+                </h5>
+                <span class="badge bg-subtle text-muted border">Exams</span>
+            </div>
+            <div class="card-body-modern" style="min-height: 260px;">
+                <div style="position: relative; width: 100%; height: 220px;">
+                    <canvas id="studentProfilePerfChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- DETAILED PERFORMANCE & ATTENDANCE TABLES                                   -->
+<!-- ========================================================================== -->
+<div class="row g-4 mb-4">
+    <!-- Academic Examination Records -->
+    <div class="col-12 col-lg-7">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-award text-primary"></i> Academic Performance Records
+                </h5>
+                <a href="{{ url_for('add_performance_view', student_id=profile.student.id) }}" class="btn btn-sm btn-primary-modern py-1 px-2">
+                    <i class="bi bi-plus"></i> Add Marks
+                </a>
+            </div>
+            <div class="card-body-modern p-0">
+                {% if profile.performance.records %}
+                    <div class="table-responsive">
+                        <table class="table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Semester</th>
+                                    <th>Internal (40)</th>
+                                    <th>External (60)</th>
+                                    <th>Total (100)</th>
+                                    <th>Grade</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in profile.performance.records %}
+                                <tr>
+                                    <td class="fw-bold">{{ r.subject }}</td>
+                                    <td><span class="badge bg-subtle text-muted">{{ r.semester }}</span></td>
+                                    <td>{{ r.internal_marks }}</td>
+                                    <td>{{ r.external_marks }}</td>
+                                    <td><strong class="text-primary">{{ r.total_marks }}</strong> ({{ r.percentage }}%)</td>
+                                    <td>
+                                        <span class="badge-status {% if r.grade in ['A+', 'A'] %}success{% elif r.grade in ['B+', 'B'] %}info{% elif r.grade in ['C', 'D'] %}warning{% else %}danger{% endif %}">
+                                            {{ r.grade }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ url_for('edit_performance_view', record_id=r.id) }}" class="btn btn-sm btn-outline-modern p-1 px-2 text-primary" title="Edit Marks">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state py-4">
+                        <div class="empty-state-icon"><i class="bi bi-journal-x"></i></div>
+                        <div class="empty-state-title">No Examination Marks Recorded</div>
+                        <div class="empty-state-text">Click "Add Marks" to log internal and external exam results for this student.</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject-Wise Attendance Breakdown -->
+    <div class="col-12 col-lg-5">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-card-checklist text-primary"></i> Subject-Wise Attendance
+                </h5>
+                <span class="badge bg-subtle text-muted border">Breakdown</span>
+            </div>
+            <div class="card-body-modern p-0">
+                {% if profile.attendance.subject_breakdown %}
+                    <div class="table-responsive">
+                        <table class="table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Total</th>
+                                    <th>Present</th>
+                                    <th>Attendance %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sub in profile.attendance.subject_breakdown %}
+                                <tr>
+                                    <td class="fw-semibold">{{ sub.subject }}</td>
+                                    <td>{{ sub.total }}</td>
+                                    <td>{{ sub.present }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress-modern flex-grow-1" style="width: 50px;">
+                                                <div class="progress-bar {% if sub.pct >= 75 %}bg-success{% elif sub.pct >= 60 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ sub.pct }}%;"></div>
+                                            </div>
+                                            <span class="fw-bold small">{{ sub.pct }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state py-4">
+                        <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
+                        <div class="empty-state-title">No Attendance Recorded</div>
+                        <div class="empty-state-text">Mark attendance for this student to see subject-level statistics.</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- RECENT ATTENDANCE HISTORY LOG                                              -->
+<!-- ========================================================================== -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <h5 class="card-title-modern">
+            <i class="bi bi-clock-history text-primary"></i> Recent Attendance Session Logs
+        </h5>
+        <span class="badge bg-subtle text-muted border">Last 15 Sessions</span>
+    </div>
+    <div class="card-body-modern p-0">
+        {% if profile.attendance.recent_history %}
+            <div class="table-responsive">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Subject</th>
+                            <th>Status</th>
+                            <th>Recorded Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in profile.attendance.recent_history %}
+                        <tr>
+                            <td><i class="bi bi-calendar3 me-2 text-muted"></i><strong>{{ log.date }}</strong></td>
+                            <td>{{ log.subject }}</td>
+                            <td>
+                                {% if log.status == 'Present' %}
+                                    <span class="badge-status success"><i class="bi bi-check-circle-fill"></i> Present</span>
+                                {% elif log.status == 'Absent' %}
+                                    <span class="badge-status danger"><i class="bi bi-x-circle-fill"></i> Absent</span>
+                                {% else %}
+                                    <span class="badge-status warning"><i class="bi bi-clock-fill"></i> Late</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted small">{{ log.created_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state py-4">
+                <div class="empty-state-text">No attendance logs available.</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.STUDENT_PROFILE_DATA = {{ profile | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

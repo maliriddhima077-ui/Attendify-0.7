@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Mark Attendance — Attendify Analytics{% endblock %}
+{% block page_title %}Daily Class Attendance Register{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-main mb-1">Mark Attendance Register</h3>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Select session parameters, toggle student presence, and save attendance to database.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('attendance_history') }}" class="btn btn-outline-modern">
+            <i class="bi bi-clock-history"></i> View Log
+        </a>
+        <a href="{{ url_for('attendance_analysis') }}" class="btn btn-outline-modern">
+            <i class="bi bi-graph-up"></i> Attendance Analytics
+        </a>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- SESSION SELECTOR CARD                                                      -->
+<!-- ========================================================================== -->
+<div class="card-modern mb-4">
+    <div class="card-header-modern">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <span class="step-chip"><span class="step-num">1</span> Session</span>
+            <h5 class="card-title-modern mb-0">
+                <i class="bi bi-sliders text-primary"></i> Select Session Parameters
+            </h5>
+        </div>
+    </div>
+    <div class="card-body-modern">
+        <form method="GET" action="{{ url_for('attendance_view') }}" class="row g-3 align-items-end">
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label">Date <span class="text-danger">*</span></label>
+                <input type="date" name="date" class="form-control" value="{{ selected_date }}" required>
+            </div>
+
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label">Class / Program <span class="text-danger">*</span></label>
+                <select name="class_name" class="form-select" required>
+                    {% for c in classes %}
+                        <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-sm-6 col-md-2">
+                <label class="form-label">Division <span class="text-danger">*</span></label>
+                <select name="division" class="form-select" required>
+                    {% for d in divisions %}
+                        <option value="{{ d }}" {% if selected_division == d %}selected{% endif %}>Division {{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label">Subject / Course <span class="text-danger">*</span></label>
+                <select name="subject" class="form-select" required>
+                    {% for s in subjects %}
+                        <option value="{{ s }}" {% if selected_subject == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-1">
+                <button type="submit" class="btn btn-primary-modern w-100 p-2 justify-content-center" title="Load Students">
+                    <i class="bi bi-arrow-clockwise"></i> Load
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- ATTENDANCE MARKING REGISTER SHEET                                          -->
+<!-- ========================================================================== -->
+<div class="card-modern">
+    <div class="card-header-modern flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <span class="step-chip"><span class="step-num">2</span> Register</span>
+            <div>
+                <h5 class="card-title-modern mb-1">
+                    <i class="bi bi-person-check-fill text-success"></i> Attendance Sheet: {{ selected_class }} - Division {{ selected_division }}
+                </h5>
+                <small class="text-muted">
+                    Subject: <strong class="text-main">{{ selected_subject }}</strong> &bull; Date: <strong class="text-main">{{ selected_date }}</strong>
+                </small>
+            </div>
+        </div>
+
+        <!-- Quick Action Batch Buttons -->
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline-modern text-success" id="markAllPresentBtn">
+                <i class="bi bi-check-all me-1"></i> All Present
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-modern text-danger" id="markAllAbsentBtn">
+                <i class="bi bi-x-lg me-1"></i> All Absent
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-modern text-warning" id="markAllLateBtn">
+                <i class="bi bi-clock me-1"></i> All Late
+            </button>
+        </div>
+    </div>
+
+    <!-- Live Tally Meter Bar -->
+    <div class="tally-bar">
+        <span class="tally-pill t-total">
+            <i class="bi bi-people-fill text-primary"></i> Total
+            <span class="t-count" id="tallyTotal">{{ students_sheet | length }}</span>
+        </span>
+        <span class="tally-pill t-present">
+            <i class="bi bi-check-circle-fill"></i> Present
+            <span class="t-count" id="tallyPresent">0</span>
+        </span>
+        <span class="tally-pill t-absent">
+            <i class="bi bi-x-circle-fill"></i> Absent
+            <span class="t-count" id="tallyAbsent">0</span>
+        </span>
+        <span class="tally-pill t-late">
+            <i class="bi bi-clock-fill"></i> Late
+            <span class="t-count" id="tallyLate">0</span>
+        </span>
+        <span class="ms-auto small text-muted d-none d-md-inline">
+            <i class="bi bi-lightning-charge-fill text-warning me-1"></i>Use the batch buttons to fill every row instantly
+        </span>
+    </div>
+
+    <div class="card-body-modern p-0">
+        {% if students_sheet %}
+            <form method="POST" action="{{ url_for('save_attendance') }}" id="attendanceRegisterForm">
+                <input type="hidden" name="date" value="{{ selected_date }}">
+                <input type="hidden" name="subject" value="{{ selected_subject }}">
+                <input type="hidden" name="class_name" value="{{ selected_class }}">
+                <input type="hidden" name="division" value="{{ selected_division }}">
+
+                <div class="table-responsive">
+                    <table class="table-modern">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">Roll No</th>
+                                <th>Student Name</th>
+                                <th>Class & Div</th>
+                                <th class="text-center" style="width: 320px;">Attendance Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for st in students_sheet %}
+                            <tr>
+                                <td><code class="fw-bold fs-6">{{ st.roll }}</code></td>
+                                <td>
+                                    <div class="fw-bold text-main">{{ st.name }}</div>
+                                    <small class="text-muted">ID: #{{ st.id }}</small>
+                                </td>
+                                <td><span class="badge bg-subtle text-muted border">{{ st.class_name }} - {{ st.division }}</span></td>
+                                <td class="text-center">
+                                    <div class="segmented-control">
+                                        <input type="radio" id="p_{{ st.id }}" name="attendance_{{ st.id }}" value="Present" {% if st.status == 'Present' %}checked{% endif %}>
+                                        <label for="p_{{ st.id }}"><i class="bi bi-check2 me-1"></i> Present</label>
+
+                                        <input type="radio" id="a_{{ st.id }}" name="attendance_{{ st.id }}" value="Absent" {% if st.status == 'Absent' %}checked{% endif %}>
+                                        <label for="a_{{ st.id }}"><i class="bi bi-x me-1"></i> Absent</label>
+
+                                        <input type="radio" id="l_{{ st.id }}" name="attendance_{{ st.id }}" value="Late" {% if st.status == 'Late' %}checked{% endif %}>
+                                        <label for="l_{{ st.id }}"><i class="bi bi-clock me-1"></i> Late</label>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-4 border-top bg-subtle d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">
+                        <i class="bi bi-shield-check me-1 text-success"></i> Saving updates or creates records for this date &amp; subject — never duplicated.
+                    </div>
+                    <button type="submit" class="btn btn-primary-modern px-4 py-2 fs-6">
+                        <i class="bi bi-cloud-arrow-up-fill"></i> Save Attendance Records
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+                <div class="empty-state-title">No Students in Selected Class</div>
+                <div class="empty-state-text">There are currently no students enrolled in {{ selected_class }} Division {{ selected_division }}.</div>
+                <a href="{{ url_for('add_student_view') }}" class="btn btn-primary-modern btn-sm">Enroll New Student</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/attendance.js') }}"></script>
+{% endblock %}

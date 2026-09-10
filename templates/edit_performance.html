@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Marks — Attendify Analytics{% endblock %}
+{% block page_title %}Edit Performance Record{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-modern">
+    <a href="{{ url_for('dashboard') }}"><i class="bi bi-house me-1"></i> Dashboard</a>
+    <i class="bi bi-chevron-right"></i>
+    <a href="{{ url_for('performance_list') }}">Gradebook</a>
+    <i class="bi bi-chevron-right"></i>
+    <span class="active">Edit Marks (#{{ record.id }})</span>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-8">
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-pencil-square text-primary"></i> Edit Marks for {{ record.student_name }} ({{ record.roll }})
+                </h5>
+                <a href="{{ url_for('performance_list') }}" class="btn btn-sm btn-outline-modern">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Gradebook
+                </a>
+            </div>
+
+            <div class="card-body-modern">
+                <form method="POST" action="{{ url_for('edit_performance_view', record_id=record.id) }}">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">Student</label>
+                            <input type="text" class="form-control bg-subtle" value="{{ record.student_name }} ({{ record.roll }})" readonly disabled>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="semester" class="form-label">Semester <span class="text-danger">*</span></label>
+                            <select name="semester" id="semester" class="form-select" required>
+                                {% for sem in semesters %}
+                                    <option value="{{ sem }}" {% if record.semester == sem %}selected{% endif %}>{{ sem }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                            <select name="subject" id="subject" class="form-select" required>
+                                {% for sub in subjects %}
+                                    <option value="{{ sub }}" {% if record.subject == sub %}selected{% endif %}>{{ sub }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="internal_marks" class="form-label">Internal Marks (Max: 40) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.5" min="0" max="40" class="form-control" id="internal_marks" name="internal_marks" required value="{{ record.internal_marks }}">
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="external_marks" class="form-label">External Marks (Max: 60) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.5" min="0" max="60" class="form-control" id="external_marks" name="external_marks" required value="{{ record.external_marks }}">
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <div class="p-3 bg-subtle rounded-3 border d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                <div>
+                                    <div class="text-muted small fw-semibold">TOTAL MARKS</div>
+                                    <h4 class="fw-bold text-main mb-0" id="previewTotal">{{ record.total_marks }} / 100</h4>
+                                </div>
+                                <div>
+                                    <div class="text-muted small fw-semibold">PERCENTAGE</div>
+                                    <h4 class="fw-bold text-primary mb-0" id="previewPct">{{ record.percentage }}%</h4>
+                                </div>
+                                <div>
+                                    <div class="text-muted small fw-semibold">GRADE</div>
+                                    <h4 class="fw-bold text-success mb-0" id="previewGrade">{{ record.grade }}</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('performance_list') }}" class="btn btn-outline-modern">Cancel</a>
+                            <button type="submit" class="btn btn-primary-modern px-4">
+                                <i class="bi bi-check2"></i> Update Marks
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const internalInput = document.getElementById('internal_marks');
+    const externalInput = document.getElementById('external_marks');
+    const previewTotal = document.getElementById('previewTotal');
+    const previewPct = document.getElementById('previewPct');
+    const previewGrade = document.getElementById('previewGrade');
+
+    function calculatePreview() {
+        const intVal = parseFloat(internalInput.value) || 0;
+        const extVal = parseFloat(externalInput.value) || 0;
+        const total = (intVal + extVal).toFixed(1);
+        const pct = ((total / 100) * 100).toFixed(1);
+
+        let grade = 'F';
+        if (pct >= 90) grade = 'A+';
+        else if (pct >= 80) grade = 'A';
+        else if (pct >= 70) grade = 'B+';
+        else if (pct >= 60) grade = 'B';
+        else if (pct >= 50) grade = 'C';
+        else if (pct >= 40) grade = 'D';
+
+        previewTotal.textContent = `${total} / 100`;
+        previewPct.textContent = `${pct}%`;
+        previewGrade.textContent = grade;
+    }
+
+    internalInput.addEventListener('input', calculatePreview);
+    externalInput.addEventListener('input', calculatePreview);
+});
+</script>
+{% endblock %}

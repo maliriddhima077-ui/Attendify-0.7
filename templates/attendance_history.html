@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Log & History — Attendify Analytics{% endblock %}
+{% block page_title %}Attendance History Log{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-main mb-1">Attendance History & Audit Log</h3>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Inspect past daily attendance records with granular multi-parameter filtering.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('export_attendance_csv') }}" class="btn btn-outline-modern">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Export Log CSV
+        </a>
+        <a href="{{ url_for('attendance_view') }}" class="btn btn-primary-modern">
+            <i class="bi bi-calendar-plus"></i> Mark Attendance
+        </a>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- MULTI-PARAMETER FILTER BAR                                                 -->
+<!-- ========================================================================== -->
+<div class="card-modern mb-4">
+    <div class="card-body-modern py-3">
+        <form method="GET" action="{{ url_for('attendance_history') }}" class="row g-3 align-items-end">
+            <div class="col-12 col-sm-6 col-md-2">
+                <label class="form-label">From Date</label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+
+            <div class="col-12 col-sm-6 col-md-2">
+                <label class="form-label">To Date</label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label">Class</label>
+                <select name="class_name" class="form-select">
+                    <option value="">All Classes</option>
+                    {% for c in classes %}
+                        <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-6 col-md-1">
+                <label class="form-label">Div</label>
+                <select name="division" class="form-select">
+                    <option value="">All</option>
+                    {% for d in divisions %}
+                        <option value="{{ d }}" {% if selected_division == d %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label">Subject</label>
+                <select name="subject" class="form-select">
+                    <option value="">All Subjects</option>
+                    {% for s in subjects %}
+                        <option value="{{ s }}" {% if selected_subject == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-6 col-md-1">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All</option>
+                    <option value="Present" {% if selected_status == 'Present' %}selected{% endif %}>Present</option>
+                    <option value="Absent" {% if selected_status == 'Absent' %}selected{% endif %}>Absent</option>
+                    <option value="Late" {% if selected_status == 'Late' %}selected{% endif %}>Late</option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-primary-modern flex-grow-1 p-2 justify-content-center" title="Search">
+                    <i class="bi bi-funnel-fill"></i> Filter
+                </button>
+                <a href="{{ url_for('attendance_history') }}" class="btn btn-outline-modern p-2 justify-content-center" title="Reset">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- ATTENDANCE LOG TABLE                                                       -->
+<!-- ========================================================================== -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="card-title-modern mb-0">
+                <i class="bi bi-clock-history text-primary"></i> Attendance Records Log
+            </h5>
+            <span class="badge bg-primary text-white rounded-pill">{{ records | length }} Matches</span>
+        </div>
+        <div>
+            <input type="text" id="liveTableSearch" class="form-control form-control-sm" placeholder="Live search in table..." style="width: 200px;">
+        </div>
+    </div>
+
+    <div class="card-body-modern p-0">
+        {% if records %}
+            <div class="table-responsive">
+                <table class="table-modern table-filterable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Student Name</th>
+                            <th>Roll No</th>
+                            <th>Class & Div</th>
+                            <th>Subject</th>
+                            <th>Status</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr>
+                            <td><strong><i class="bi bi-calendar-event me-2 text-muted"></i>{{ r.date }}</strong></td>
+                            <td>
+                                <a href="{{ url_for('student_profile', student_id=r.student_id) }}" class="fw-bold text-main">
+                                    {{ r.student_name }}
+                                </a>
+                            </td>
+                            <td><code>{{ r.roll }}</code></td>
+                            <td><span class="badge bg-subtle text-muted border">{{ r.class_name }} - {{ r.division }}</span></td>
+                            <td>{{ r.subject }}</td>
+                            <td>
+                                {% if r.status == 'Present' %}
+                                    <span class="badge-status success"><i class="bi bi-check2"></i> Present</span>
+                                {% elif r.status == 'Absent' %}
+                                    <span class="badge-status danger"><i class="bi bi-x"></i> Absent</span>
+                                {% else %}
+                                    <span class="badge-status warning"><i class="bi bi-clock"></i> Late</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted small">{{ r.created_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
+                <div class="empty-state-title">No Attendance Logs Found</div>
+                <div class="empty-state-text">No attendance records match your filter criteria. Try expanding the date range.</div>
+                <a href="{{ url_for('attendance_history') }}" class="btn btn-outline-modern btn-sm">Reset Filter</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

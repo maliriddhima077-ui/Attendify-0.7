@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Analytics — Attendify Analytics{% endblock %}
+{% block page_title %}Attendance Performance & Risk Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-main mb-1">Attendance Analytics & Thresholds</h3>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Institutional compliance monitoring: Categorized by Excellent (≥90%), Good (75-89%), Warning (60-74%), and Critical (&lt;60%).
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('report_attendance', class_name=selected_class, division=selected_division, subject=selected_subject) }}" class="btn btn-outline-modern" target="_blank">
+            <i class="bi bi-printer"></i> Print Report
+        </a>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- SUMMARY KPI CARDS                                                          -->
+<!-- ========================================================================== -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-primary h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Students</div>
+                <div class="stat-value">{{ analysis.summary.total_students }}</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-people-fill"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-info h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Avg Attendance</div>
+                <div class="stat-value">{{ analysis.summary.avg_attendance }}%</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-percent"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-success h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Excellent (≥90%)</div>
+                <div class="stat-value">{{ analysis.summary.excellent_count }}</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-star-fill"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-info h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Good (75-89%)</div>
+                <div class="stat-value">{{ analysis.summary.good_count }}</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-hand-thumbs-up-fill"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-warning h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Warning (60-74%)</div>
+                <div class="stat-value">{{ analysis.summary.warning_count }}</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-danger h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Critical (&lt;60%)</div>
+                <div class="stat-value">{{ analysis.summary.critical_count }}</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-shield-x"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- FILTER CARD                                                                -->
+<!-- ========================================================================== -->
+<div class="card-modern mb-4">
+    <div class="card-body-modern py-3">
+        <form method="GET" action="{{ url_for('attendance_analysis') }}" class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label">Class</label>
+                <select name="class_name" class="form-select">
+                    <option value="">All Classes</option>
+                    {% for c in classes %}
+                        <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3">
+                <label class="form-label">Division</label>
+                <select name="division" class="form-select">
+                    <option value="">All Divisions</option>
+                    {% for d in divisions %}
+                        <option value="{{ d }}" {% if selected_division == d %}selected{% endif %}>Division {{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3">
+                <label class="form-label">Subject</label>
+                <select name="subject" class="form-select">
+                    <option value="">All Subjects</option>
+                    {% for s in subjects %}
+                        <option value="{{ s }}" {% if selected_subject == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-primary-modern flex-grow-1 p-2 justify-content-center">
+                    <i class="bi bi-funnel-fill"></i> Filter
+                </button>
+                <a href="{{ url_for('attendance_analysis') }}" class="btn btn-outline-modern p-2 justify-content-center">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- STUDENT ATTENDANCE BREAKDOWN TABLE                                         -->
+<!-- ========================================================================== -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="card-title-modern mb-0">
+                <i class="bi bi-speedometer2 text-primary"></i> Attendance Compliance Breakdown
+            </h5>
+            <span class="badge bg-primary text-white rounded-pill">{{ analysis.students | length }} Students</span>
+        </div>
+        <div>
+            <input type="text" id="liveTableSearch" class="form-control form-control-sm" placeholder="Instant filter..." style="width: 200px;">
+        </div>
+    </div>
+
+    <div class="card-body-modern p-0">
+        {% if analysis.students %}
+            <div class="table-responsive">
+                <table class="table-modern table-filterable">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Roll</th>
+                            <th>Class & Div</th>
+                            <th>Total Classes</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Late</th>
+                            <th>Attendance Progress</th>
+                            <th>Status Tier</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for st in analysis.students %}
+                        <tr {% if st.attendance_pct < 75 %}style="background-color: rgba(239, 68, 68, 0.03);"{% endif %}>
+                            <td>
+                                <a href="{{ url_for('student_profile', student_id=st.student_id) }}" class="fw-bold text-main">
+                                    {{ st.name }}
+                                </a>
+                            </td>
+                            <td><code>{{ st.roll }}</code></td>
+                            <td><span class="badge bg-subtle text-muted border">{{ st.class_name }} - {{ st.division }}</span></td>
+                            <td>{{ st.total_classes }}</td>
+                            <td><strong class="text-success">{{ st.present_count }}</strong></td>
+                            <td><strong class="text-danger">{{ st.absent_count }}</strong></td>
+                            <td><strong class="text-warning">{{ st.late_count }}</strong></td>
+                            <td style="min-width: 150px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress-modern flex-grow-1">
+                                        <div class="progress-bar bg-{{ st.badge }}" style="width: {{ st.attendance_pct }}%;"></div>
+                                    </div>
+                                    <span class="fw-bold text-{{ st.badge }}">{{ st.attendance_pct }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge-status {{ st.badge }}">
+                                    {{ st.category }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('student_profile', student_id=st.student_id) }}" class="btn btn-sm btn-outline-modern p-1 px-2" title="View Profile">
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+                <div class="empty-state-title">No Attendance Analysis Available</div>
+                <div class="empty-state-text">No student records found for the selected filter.</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

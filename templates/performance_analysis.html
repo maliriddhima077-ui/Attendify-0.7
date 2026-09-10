@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Performance Analytics — Attendify Analytics{% endblock %}
+{% block page_title %}Academic Performance Analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-main mb-1">Academic Performance & Examination Analytics</h3>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Assess institutional pass rates, grade distributions, and comparative subject performance metrics.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('report_performance', class_name=selected_class, semester=selected_semester, subject=selected_subject) }}" class="btn btn-outline-modern" target="_blank">
+            <i class="bi bi-printer"></i> Print Performance Report
+        </a>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- 6 ACADEMIC SUMMARY METRIC CARDS                                            -->
+<!-- ========================================================================== -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-primary h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Total Exam Records</div>
+                <div class="stat-value">{{ analysis.summary.total_records }}</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-journal-text"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-info h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Average Score</div>
+                <div class="stat-value">{{ analysis.summary.avg_percentage }}%</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-percent"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-success h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Highest Score</div>
+                <div class="stat-value">{{ analysis.summary.highest_percentage }}%</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-trophy-fill"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-warning h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Lowest Score</div>
+                <div class="stat-value">{{ analysis.summary.lowest_percentage }}%</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-arrow-down-circle-fill"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-success h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Passed Exams</div>
+                <div class="stat-value">{{ analysis.summary.passed_count }}</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-check-circle-fill"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-danger h-100">
+            <div class="stat-card-content">
+                <div class="stat-label">Failed (F)</div>
+                <div class="stat-value">{{ analysis.summary.failed_count }}</div>
+            </div>
+            <div class="stat-icon-wrapper"><i class="bi bi-x-circle-fill"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- FILTER CARD                                                                -->
+<!-- ========================================================================== -->
+<div class="card-modern mb-4">
+    <div class="card-body-modern py-3">
+        <form method="GET" action="{{ url_for('performance_analysis') }}" class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label">Class</label>
+                <select name="class_name" class="form-select">
+                    <option value="">All Classes</option>
+                    {% for c in classes %}
+                        <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3">
+                <label class="form-label">Semester</label>
+                <select name="semester" class="form-select">
+                    <option value="">All Semesters</option>
+                    {% for sem in semesters %}
+                        <option value="{{ sem }}" {% if selected_semester == sem %}selected{% endif %}>{{ sem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3">
+                <label class="form-label">Subject</label>
+                <select name="subject" class="form-select">
+                    <option value="">All Subjects</option>
+                    {% for s in subjects %}
+                        <option value="{{ s }}" {% if selected_subject == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-primary-modern flex-grow-1 p-2 justify-content-center">
+                    <i class="bi bi-funnel-fill"></i> Filter
+                </button>
+                <a href="{{ url_for('performance_analysis') }}" class="btn btn-outline-modern p-2 justify-content-center">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- ANALYTICAL CHARTS ROW                                                      -->
+<!-- ========================================================================== -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-4">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-pie-chart text-success"></i> Pass / Fail Ratio
+                </h5>
+                <span class="badge bg-subtle text-muted border">Threshold: 40%</span>
+            </div>
+            <div class="card-body-modern d-flex flex-column align-items-center justify-content-center" style="min-height: 260px;">
+                <div style="position: relative; width: 100%; height: 220px;">
+                    <canvas id="perfPassPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-8">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-bar-chart text-primary"></i> Grade Distribution (A+ to F)
+                </h5>
+                <span class="badge bg-subtle text-muted border">Student Count</span>
+            </div>
+            <div class="card-body-modern" style="min-height: 260px;">
+                <div style="position: relative; width: 100%; height: 220px;">
+                    <canvas id="perfGradeBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- COMPARATIVE SUBJECT PERFORMANCE TABLE                                      -->
+<!-- ========================================================================== -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <h5 class="card-title-modern">
+            <i class="bi bi-journal-bookmark text-primary"></i> Comparative Subject Evaluation
+        </h5>
+        <span class="badge bg-primary text-white rounded-pill">{{ analysis.subject_averages | length }} Subjects</span>
+    </div>
+
+    <div class="card-body-modern p-0">
+        {% if analysis.subject_averages %}
+            <div class="table-responsive">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Subject / Course</th>
+                            <th>Evaluated Students</th>
+                            <th>Avg Internal (40)</th>
+                            <th>Avg External (60)</th>
+                            <th>Avg Total (100)</th>
+                            <th>Average %</th>
+                            <th>Highest %</th>
+                            <th>Lowest %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in analysis.subject_averages %}
+                        <tr>
+                            <td class="fw-bold">{{ sub.subject }}</td>
+                            <td><span class="badge bg-subtle text-muted">{{ sub.count }} Students</span></td>
+                            <td>{{ sub.avg_internal }}</td>
+                            <td>{{ sub.avg_external }}</td>
+                            <td><strong class="text-primary">{{ sub.avg_total }}</strong></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress-modern flex-grow-1" style="width: 60px;">
+                                        <div class="progress-bar bg-primary" style="width: {{ sub.avg_percentage }}%;"></div>
+                                    </div>
+                                    <span class="fw-bold">{{ sub.avg_percentage }}%</span>
+                                </div>
+                            </td>
+                            <td><span class="text-success fw-bold">{{ sub.highest_pct }}%</span></td>
+                            <td><span class="text-danger fw-bold">{{ sub.lowest_pct }}%</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-journal-x"></i></div>
+                <div class="empty-state-title">No Subject Analytics Found</div>
+                <div class="empty-state-text">No examination records match the current filter selection.</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.PERF_ANALYTICS_DATA = {{ analysis | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

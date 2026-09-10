@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report.title }} — {{ report.settings.institution_name }}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 30px 15px;
+        }
+        .report-paper {
+            max-width: 960px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 48px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+        .institution-header {
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+        }
+        .report-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+        }
+        .table-report {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            margin-bottom: 24px;
+        }
+        .table-report th {
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 9px 12px;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+            color: #475569;
+        }
+        .table-report td {
+            border: 1px solid #e2e8f0;
+            padding: 9px 12px;
+            vertical-align: middle;
+        }
+        .summary-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .signature-block {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px dashed #cbd5e1;
+        }
+        .floating-actions {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+            display: flex;
+            gap: 10px;
+        }
+        @media print {
+            body { background: #fff !important; padding: 0 !important; }
+            .report-paper { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; }
+            .floating-actions { display: none !important; }
+            @page { margin: 15mm; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Print Control Bar -->
+    <div class="floating-actions no-print">
+        <button onclick="window.print()" class="btn btn-primary shadow-lg d-flex align-items-center gap-2 px-4 py-2 fw-semibold">
+            <i class="bi bi-printer-fill"></i> Print Report / Save PDF
+        </button>
+        <button onclick="window.close()" class="btn btn-secondary shadow-lg d-flex align-items-center gap-2 px-3 py-2">
+            <i class="bi bi-x-lg"></i> Close
+        </button>
+    </div>
+
+    <div class="report-paper">
+        <!-- ========================================================== -->
+        <!-- INSTITUTIONAL LETTERHEAD                                   -->
+        <!-- ========================================================== -->
+        <div class="institution-header d-flex justify-content-between align-items-start">
+            <div>
+                <h3 class="fw-bold mb-0 text-uppercase" style="letter-spacing: -0.01em;">{{ report.settings.institution_name }}</h3>
+                <div class="text-muted" style="font-size: 0.9rem;">Department of {{ report.settings.department }}</div>
+                <div class="text-muted small">Academic Year: {{ report.settings.academic_year }} &bull; Official Institutional Record</div>
+            </div>
+            <div class="text-end">
+                <div class="badge bg-dark text-white p-2 mb-1" style="font-size: 0.8rem;">OFFICIAL DOSSIER</div>
+                <div class="text-muted small">Generated: {{ report.generated_at }}</div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold text-primary mb-0">{{ report.title }}</h4>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- REPORT TYPE: ATTENDANCE SUMMARY                            -->
+        <!-- ========================================================== -->
+        {% if report.report_type == 'attendance' %}
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="report-badge">Class: <strong>{{ report.filters.class_name }}</strong></span>
+                <span class="report-badge">Division: <strong>{{ report.filters.division }}</strong></span>
+                <span class="report-badge">Subject: <strong>{{ report.filters.subject }}</strong></span>
+                <span class="report-badge">Period: <strong>{{ report.filters.date_from }} to {{ report.filters.date_to }}</strong></span>
+            </div>
+
+            <div class="summary-box row g-3 text-center">
+                <div class="col-3">
+                    <small class="text-muted fw-semibold">TOTAL STUDENTS</small>
+                    <div class="fs-4 fw-bold">{{ report.summary.total_students }}</div>
+                </div>
+                <div class="col-3">
+                    <small class="text-muted fw-semibold">AVG ATTENDANCE</small>
+                    <div class="fs-4 fw-bold text-primary">{{ report.summary.avg_attendance }}%</div>
+                </div>
+                <div class="col-3">
+                    <small class="text-muted fw-semibold">GOOD / EXCELLENT</small>
+                    <div class="fs-4 fw-bold text-success">{{ report.summary.excellent_count + report.summary.good_count }}</div>
+                </div>
+                <div class="col-3">
+                    <small class="text-muted fw-semibold">AT RISK (&lt;75%)</small>
+                    <div class="fs-4 fw-bold text-danger">{{ report.summary.at_risk_count }}</div>
+                </div>
+            </div>
+
+            <table class="table-report">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>Roll No</th>
+                        <th>Student Name</th>
+                        <th>Class & Div</th>
+                        <th>Total Classes</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Late</th>
+                        <th>Attendance %</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in report.data %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ s.roll }}</strong></td>
+                        <td>{{ s.student_name }}</td>
+                        <td>{{ s.class_name }} - {{ s.division }}</td>
+                        <td>{{ s.total_classes }}</td>
+                        <td>{{ s.present_count }}</td>
+                        <td>{{ s.absent_count }}</td>
+                        <td>{{ s.late_count }}</td>
+                        <td><strong>{{ s.attendance_pct }}%</strong></td>
+                        <td><span class="badge text-bg-{{ s.badge }}">{{ s.category }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <!-- ========================================================== -->
+        <!-- REPORT TYPE: PERFORMANCE REPORT                            -->
+        <!-- ========================================================== -->
+        {% if report.report_type == 'performance' %}
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="report-badge">Class: <strong>{{ report.filters.class_name }}</strong></span>
+                <span class="report-badge">Semester: <strong>{{ report.filters.semester }}</strong></span>
+                <span class="report-badge">Subject: <strong>{{ report.filters.subject }}</strong></span>
+            </div>
+
+            <div class="summary-box row g-3 text-center">
+                <div class="col-2">
+                    <small class="text-muted fw-semibold">RECORDS</small>
+                    <div class="fs-4 fw-bold">{{ report.summary.total_records }}</div>
+                </div>
+                <div class="col-2">
+                    <small class="text-muted fw-semibold">AVERAGE</small>
+                    <div class="fs-4 fw-bold text-primary">{{ report.summary.avg_percentage }}%</div>
+                </div>
+                <div class="col-2">
+                    <small class="text-muted fw-semibold">HIGHEST</small>
+                    <div class="fs-4 fw-bold text-success">{{ report.summary.highest_percentage }}%</div>
+                </div>
+                <div class="col-2">
+                    <small class="text-muted fw-semibold">LOWEST</small>
+                    <div class="fs-4 fw-bold text-danger">{{ report.summary.lowest_percentage }}%</div>
+                </div>
+                <div class="col-2">
+                    <small class="text-muted fw-semibold">PASSED</small>
+                    <div class="fs-4 fw-bold text-success">{{ report.summary.passed_count }}</div>
+                </div>
+                <div class="col-2">
+                    <small class="text-muted fw-semibold">PASS RATE</small>
+                    <div class="fs-4 fw-bold text-primary">{{ report.summary.pass_rate }}%</div>
+                </div>
+            </div>
+
+            <table class="table-report">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>Roll No</th>
+                        <th>Student Name</th>
+                        <th>Class & Div</th>
+                        <th>Subject</th>
+                        <th>Internal (40)</th>
+                        <th>External (60)</th>
+                        <th>Total (100)</th>
+                        <th>Percentage</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in report.data %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ r.roll }}</strong></td>
+                        <td>{{ r.student_name }}</td>
+                        <td>{{ r.class_name }} - {{ r.division }}</td>
+                        <td>{{ r.subject }}</td>
+                        <td>{{ r.internal_marks }}</td>
+                        <td>{{ r.external_marks }}</td>
+                        <td><strong>{{ r.total_marks }}</strong></td>
+                        <td>{{ r.percentage }}%</td>
+                        <td><strong>{{ r.grade }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <!-- ========================================================== -->
+        <!-- REPORT TYPE: INDIVIDUAL STUDENT DOSSIER                    -->
+        <!-- ========================================================== -->
+        {% if report.report_type == 'student_dossier' %}
+            <div class="summary-box mb-4">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted fw-semibold">STUDENT NAME</small>
+                        <div class="fw-bold">{{ report.profile.student.name }}</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted fw-semibold">ROLL NUMBER</small>
+                        <div class="fw-bold">{{ report.profile.student.roll }}</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted fw-semibold">CLASS & DIVISION</small>
+                        <div class="fw-bold">{{ report.profile.student.class_name }} - Div {{ report.profile.student.division }}</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted fw-semibold">EMAIL</small>
+                        <div class="fw-bold">{{ report.profile.student.email }}</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted fw-semibold">ATTENDANCE RATE</small>
+                        <div class="fw-bold fs-5 text-{{ report.profile.attendance.risk_color }}">{{ report.profile.attendance.percentage }}% ({{ report.profile.attendance.risk_level }})</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted fw-semibold">CLASSES ATTENDED</small>
+                        <div class="fw-bold">{{ report.profile.attendance.present }} / {{ report.profile.attendance.total_classes }}</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted fw-semibold">ACADEMIC AVERAGE</small>
+                        <div class="fw-bold fs-5 text-primary">{{ report.profile.performance.avg_percentage }}%</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted fw-semibold">OVERALL GRADE</small>
+                        <div class="fw-bold fs-5 text-success">{{ report.profile.performance.overall_grade }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="fw-bold text-dark mb-2">1. Academic Examination Results</h5>
+            <table class="table-report mb-4">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Semester</th>
+                        <th>Internal (40)</th>
+                        <th>External (60)</th>
+                        <th>Total Marks</th>
+                        <th>Percentage</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in report.profile.performance.records %}
+                    <tr>
+                        <td class="fw-bold">{{ p.subject }}</td>
+                        <td>{{ p.semester }}</td>
+                        <td>{{ p.internal_marks }}</td>
+                        <td>{{ p.external_marks }}</td>
+                        <td><strong>{{ p.total_marks }}</strong> / 100</td>
+                        <td>{{ p.percentage }}%</td>
+                        <td><strong>{{ p.grade }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h5 class="fw-bold text-dark mb-2">2. Subject-Wise Attendance Breakdown</h5>
+            <table class="table-report">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Total Conducted</th>
+                        <th>Classes Attended</th>
+                        <th>Classes Absent</th>
+                        <th>Attendance %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in report.profile.attendance.subject_breakdown %}
+                    <tr>
+                        <td class="fw-semibold">{{ sub.subject }}</td>
+                        <td>{{ sub.total }}</td>
+                        <td>{{ sub.present }}</td>
+                        <td>{{ sub.absent }}</td>
+                        <td><strong>{{ sub.pct }}%</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <!-- ========================================================== -->
+        <!-- REPORT TYPE: CLASS SUMMARY                                 -->
+        <!-- ========================================================== -->
+        {% if report.report_type == 'class_summary' %}
+            <div class="summary-box row g-3 text-center">
+                <div class="col-3">
+                    <small class="text-muted fw-semibold">CLASS</small>
+                    <div class="fs-4 fw-bold">{{ report.class_name }}</div>
+                </div>
+                <div class="col-3">
+                    <small class="text-muted fw-semibold">TOTAL ENROLLED</small>
+                    <div class="fs-4 fw-bold">{{ report.attendance_summary.total_students }}</div>
+                </div>
+                <div class="col-3">
+                    <small class="text-muted fw-semibold">AVG ATTENDANCE</small>
+                    <div class="fs-4 fw-bold text-primary">{{ report.attendance_summary.avg_attendance }}%</div>
+                </div>
+                <div class="col-3">
+                    <small class="text-muted fw-semibold">ACADEMIC AVG</small>
+                    <div class="fs-4 fw-bold text-success">{{ report.performance_summary.avg_percentage }}%</div>
+                </div>
+            </div>
+
+            <h5 class="fw-bold text-dark mb-2">Subject Performance Summary</h5>
+            <table class="table-report mb-4">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Avg Internal (40)</th>
+                        <th>Avg External (60)</th>
+                        <th>Avg Total (100)</th>
+                        <th>Avg Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in report.subject_performance %}
+                    <tr>
+                        <td class="fw-bold">{{ sub.subject }}</td>
+                        <td>{{ sub.avg_internal }}</td>
+                        <td>{{ sub.avg_external }}</td>
+                        <td>{{ sub.avg_total }}</td>
+                        <td><strong>{{ sub.avg_percentage }}%</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h5 class="fw-bold text-dark mb-2">Student Attendance Roster</h5>
+            <table class="table-report">
+                <thead>
+                    <tr>
+                        <th>Roll</th>
+                        <th>Student Name</th>
+                        <th>Total Classes</th>
+                        <th>Attended</th>
+                        <th>Attendance %</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for st in report.students_attendance %}
+                    <tr>
+                        <td><strong>{{ st.roll }}</strong></td>
+                        <td>{{ st.name }}</td>
+                        <td>{{ st.total_classes }}</td>
+                        <td>{{ st.present_count }}</td>
+                        <td><strong>{{ st.attendance_pct }}%</strong></td>
+                        <td><span class="badge text-bg-{{ st.badge }}">{{ st.category }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <!-- ========================================================== -->
+        <!-- OFFICIAL CERTIFICATION & SIGNATURES                        -->
+        <!-- ========================================================== -->
+        <div class="signature-block row text-center">
+            <div class="col-4">
+                <div style="height: 45px;"></div>
+                <div class="fw-bold border-top pt-2">Class Coordinator / Teacher</div>
+                <small class="text-muted">Faculty Signature</small>
+            </div>
+            <div class="col-4">
+                <div style="height: 45px;"></div>
+                <div class="fw-bold border-top pt-2">Head of Department</div>
+                <small class="text-muted">{{ report.settings.department }}</small>
+            </div>
+            <div class="col-4">
+                <div style="height: 45px;"></div>
+                <div class="fw-bold border-top pt-2">Dean / Principal</div>
+                <small class="text-muted">{{ report.settings.institution_name }}</small>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

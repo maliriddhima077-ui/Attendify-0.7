@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error (500) — Attendify Analytics{% endblock %}
+{% block page_title %}500 Internal Server Error{% endblock %}
+
+{% block content %}
+<div class="empty-state py-5 my-5">
+    <div class="empty-state-icon" style="width: 80px; height: 80px; font-size: 2.2rem; background: var(--danger-light); color: var(--danger);">
+        <i class="bi bi-shield-x"></i>
+    </div>
+    <h2 class="fw-bold text-main mb-2">500 — Internal Server Error</h2>
+    <p class="text-muted" style="max-width: 480px; margin: 0 auto 24px;">
+        An unexpected server error occurred while processing your request. The system administrator has been logged regarding this event.
+    </p>
+    {% if error %}
+        <div class="p-3 bg-subtle rounded border text-start mx-auto mb-4" style="max-width: 600px; font-family: monospace; font-size: 0.85rem;">
+            {{ error }}
+        </div>
+    {% endif %}
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary-modern px-4 py-2">
+        <i class="bi bi-house-door-fill"></i> Return to Dashboard
+    </a>
+</div>
+{% endblock %}

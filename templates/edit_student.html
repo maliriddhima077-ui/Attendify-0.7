@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Student — Attendify Analytics{% endblock %}
+{% block page_title %}Edit Student Profile{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-modern">
+    <a href="{{ url_for('dashboard') }}"><i class="bi bi-house me-1"></i> Dashboard</a>
+    <i class="bi bi-chevron-right"></i>
+    <a href="{{ url_for('students_list') }}">Students</a>
+    <i class="bi bi-chevron-right"></i>
+    <a href="{{ url_for('student_profile', student_id=student_id) }}">{{ student.name }}</a>
+    <i class="bi bi-chevron-right"></i>
+    <span class="active">Edit</span>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-pencil-square text-primary"></i> Modify Student Record (#{{ student_id }})
+                </h5>
+                <a href="{{ url_for('student_profile', student_id=student_id) }}" class="btn btn-sm btn-outline-modern">
+                    <i class="bi bi-arrow-left me-1"></i> View Profile
+                </a>
+            </div>
+
+            <div class="card-body-modern">
+                <form method="POST" action="{{ url_for('edit_student_view', student_id=student_id) }}">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <h6 class="form-section-title">1. Personal Information</h6>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required value="{{ student.name }}">
+                        </div>
+
+                        <div class="col-12 col-md-3">
+                            <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                            <select class="form-select" id="gender" name="gender" required>
+                                <option value="Male" {% if student.gender == 'Male' %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if student.gender == 'Female' %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if student.gender == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-3">
+                            <label for="date_of_birth" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ student.date_of_birth or '' }}">
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="email" class="form-label">Institutional / Contact Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" required value="{{ student.email }}">
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="phone" class="form-label">Parent / Guardian Phone <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-subtle fw-bold" title="Indian country code (fixed)">+91</span>
+                                <input type="text" inputmode="numeric" autocomplete="tel-national"
+                                       class="form-control" id="phone" name="phone"
+                                       placeholder="XXXXX XXXXX" maxlength="11"
+                                       pattern="[6-9](\s?\d){9}"
+                                       title="Enter exactly 10 digits starting with 6, 7, 8 or 9"
+                                       data-phone-input required
+                                       value="{{ student.phone }}">
+                            </div>
+                            <small class="text-muted">Enter only the 10-digit mobile number. Country code +91 is added automatically.</small>
+                            <div class="invalid-feedback d-block text-danger d-none" id="phoneError"></div>
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <h6 class="form-section-title">2. Academic & Enrollment Details</h6>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label for="roll_preview" class="form-label">
+                                Roll Number <i class="bi bi-lock-fill text-muted ms-1"></i>
+                            </label>
+                            <input type="text" class="form-control bg-subtle fw-bold" id="roll_preview"
+                                   value="{{ student.roll }}" readonly>
+                            <small class="text-muted">
+                                <i class="bi bi-lock-fill me-1"></i>Roll numbers are permanently bound to their class series and cannot be changed.
+                            </small>
+                            <div class="invalid-feedback d-block text-danger d-none" id="rollSeriesError"></div>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label for="class_name" class="form-label">Class / Program <span class="text-danger">*</span></label>
+                            <select class="form-select" id="class_name" name="class_name" required>
+                                {% for n in range(1, 7) %}
+                                    <option value="Class {{ n }}" {% if student.class_name == 'Class ' ~ n %}selected{% endif %}>Class {{ n }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label for="division" class="form-label">Division <span class="text-danger">*</span></label>
+                            <select class="form-select" id="division" name="division" required>
+                                <option value="A" {% if student.division == 'A' %}selected{% endif %}>Division A</option>
+                                <option value="B" {% if student.division == 'B' %}selected{% endif %}>Division B</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="admission_date" class="form-label">Admission Date</label>
+                            <input type="date" class="form-control" id="admission_date" name="admission_date" value="{{ student.admission_date or '' }}">
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="status" class="form-label">Enrollment Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="Active" {% if student.status == 'Active' %}selected{% endif %}>Active</option>
+                                <option value="Inactive" {% if student.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                                <option value="Graduated" {% if student.status == 'Graduated' %}selected{% endif %}>Graduated</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('student_profile', student_id=student_id) }}" class="btn btn-outline-modern">Cancel</a>
+                            <button type="submit" class="btn btn-primary-modern px-4">
+                                <i class="bi bi-check2"></i> Update Student Details
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ---- Roll Number vs Class/Division Series Guard ----
+    // A roll number is permanently bound to one fixed series. If the user
+    // changes the class or division so that the stored roll no longer
+    // belongs to that section's range, block submission with a clear error.
+    window.ROLL_RANGES = {{ roll_ranges | tojson }};
+    const STORED_ROLL = '{{ student.roll }}';
+
+    const rollPreview = document.getElementById('roll_preview');
+    const clsSelect = document.getElementById('class_name');
+    const divSelect = document.getElementById('division');
+
+    function sectionForRoll(roll) {
+        const value = parseInt(roll, 10);
+        for (const key in window.ROLL_RANGES) {
+            const [lo, hi] = window.ROLL_RANGES[key];
+            if (value >= lo && value <= hi) return key;
+        }
+        return null;
+    }
+
+    function validateSectionMatch() {
+        const selectedKey = clsSelect.value + '|' + divSelect.value;
+        const rollSection = sectionForRoll(STORED_ROLL);
+        const errBox = document.getElementById('rollSeriesError');
+        let msg = '';
+
+        if (rollSection && selectedKey && selectedKey !== rollSection) {
+            const [lo, hi] = window.ROLL_RANGES[selectedKey];
+            msg = 'Roll number ' + STORED_ROLL + ' belongs to the ' +
+                  rollSection.replace('|', ' - Division ') + ' series and cannot be moved. ' +
+                  'The valid series for ' + clsSelect.value + ' - Division ' + divSelect.value +
+                  ' is ' + lo + '-' + hi + '.';
+        }
+        if (errBox) {
+            errBox.textContent = msg;
+            errBox.classList.toggle('d-none', !msg);
+        }
+        clsSelect.classList.toggle('is-invalid', !!msg);
+        divSelect.classList.toggle('is-invalid', !!msg);
+        return !msg;
+    }
+
+    clsSelect.addEventListener('change', validateSectionMatch);
+    divSelect.addEventListener('change', validateSectionMatch);
+    validateSectionMatch();   // initial state
+
+    // ---- Indian Phone Number Validation (+91 fixed, 10 digits only) ----
+    function normalizePhoneValue(inp) {
+        let d = inp.value.replace(/\D/g, '');
+        if (d.length > 10 && d.startsWith('91')) d = d.slice(2);  // strip stored country code
+        d = d.slice(0, 10);
+        inp.value = d.length > 5 ? d.slice(0, 5) + ' ' + d.slice(5) : d;
+    }
+
+    document.querySelectorAll('input[data-phone-input]').forEach(function (inp) {
+        normalizePhoneValue(inp);  // normalize the pre-filled stored number on load
+
+        inp.addEventListener('input', function () {
+            let d = inp.value.replace(/\D/g, '');
+            if (d.length > 10 && d.startsWith('91')) d = d.slice(2);
+            d = d.slice(0, 10);
+            inp.value = d.length > 5 ? d.slice(0, 5) + ' ' + d.slice(5) : d;
+            validatePhone(inp);
+        });
+        inp.addEventListener('blur', function () { validatePhone(inp); });
+        inp.addEventListener('paste', function () {
+            setTimeout(function () { inp.dispatchEvent(new Event('input')); }, 0);
+        });
+    });
+
+    function validatePhone(inp) {
+        const err = document.getElementById('phoneError');
+        const digits = inp.value.replace(/\D/g, '');
+        let msg = '';
+        if (digits.length > 0 && digits.length < 10) {
+            msg = 'Phone number must be exactly 10 digits.';
+        } else if (digits.length === 10 && !/^[6-9]/.test(digits)) {
+            msg = 'Indian mobile numbers start with 6, 7, 8 or 9.';
+        }
+        inp.classList.toggle('is-invalid', !!msg);
+        inp.classList.toggle('is-valid', digits.length === 10 && !msg);
+        if (err) { err.textContent = msg; err.classList.toggle('d-none', !msg); }
+        return !msg;
+    }
+
+    // Block form submission while any rule is violated
+    document.querySelector('form').addEventListener('submit', function (e) {
+        const phoneInp = document.querySelector('input[data-phone-input]');
+        const phoneOk = validatePhone(phoneInp);
+        const sectionOk = validateSectionMatch();
+        if (!phoneOk || !sectionOk) {
+            e.preventDefault();
+            (sectionOk ? phoneInp : clsSelect).focus();
+        }
+    });
+</script>
+{% endblock %}

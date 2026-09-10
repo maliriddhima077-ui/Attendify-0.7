@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Settings — Attendify School System{% endblock %}
+{% block page_title %}System Settings & Demo Data{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-modern">
+    <a href="{{ url_for('dashboard') }}"><i class="bi bi-house me-1"></i> Dashboard</a>
+    <i class="bi bi-chevron-right"></i>
+    <span class="active">Settings</span>
+</div>
+
+<div class="row g-4">
+    <!-- School Configuration -->
+    <div class="col-12 col-lg-7">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-building-gear text-primary"></i> School & Academic Preferences
+                </h5>
+            </div>
+            <div class="card-body-modern">
+                <form method="POST" action="{{ url_for('settings_view') }}">
+                    <input type="hidden" name="action" value="update_settings">
+
+                    <div class="mb-3">
+                        <label for="institution_name" class="form-label">School Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="institution_name" name="institution_name" value="{{ settings.institution_name }}" required>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="department" class="form-label">School Wing / Department</label>
+                            <input type="text" class="form-control" id="department" name="department" value="{{ settings.department }}">
+                            <small class="text-muted">e.g. Secondary School Wing, Primary Section</small>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="academic_year" class="form-label">Academic Year</label>
+                            <input type="text" class="form-control" id="academic_year" name="academic_year" value="{{ settings.academic_year }}">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label for="attendance_threshold" class="form-label">Attendance Warning Threshold (%)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.5" min="1" max="100" class="form-control" id="attendance_threshold" name="attendance_threshold" value="{{ settings.attendance_threshold }}">
+                                <span class="input-group-text bg-subtle">%</span>
+                            </div>
+                            <small class="text-muted">Students falling below this percentage are flagged on the risk radar.</small>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="contact_email" class="form-label">Principal / Admin Email</label>
+                            <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ settings.contact_email }}">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-modern">
+                        <i class="bi bi-check-circle-fill"></i> Save Configuration
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Data & Database Tools -->
+    <div class="col-12 col-lg-5">
+        <div class="card-modern mb-4">
+            <div class="card-header-modern">
+                <h5 class="card-title-modern">
+                    <i class="bi bi-database-fill-gear text-info"></i> Sample Data Generator
+                </h5>
+            </div>
+            <div class="card-body-modern">
+                <p class="text-muted small mb-3">
+                    Instantly load <strong>36 primary school student profiles across Standards 1 to 6 (Sections A &amp; B)</strong>, accompanied by 30 days of attendance logs and <strong>Term 1 (Midterm)</strong> examination grades in core subjects: Mathematics, English, Environmental Studies, Hindi, Computer Science, and Art &amp; Craft.
+                </p>
+                <form method="POST" action="{{ url_for('settings_view') }}" onsubmit="return confirm('Load fresh sample students, attendance, and exam marks?');">
+                    <input type="hidden" name="action" value="seed_demo">
+                    <button type="submit" class="btn btn-outline-modern text-primary w-100 justify-content-center">
+                        <i class="bi bi-magic me-2"></i> Load Demo Dataset
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card-modern border-danger-subtle">
+            <div class="card-header-modern bg-danger-subtle">
+                <h5 class="card-title-modern text-danger">
+                    <i class="bi bi-trash3-fill text-danger"></i> Clear All Data
+                </h5>
+            </div>
+            <div class="card-body-modern">
+                <p class="text-muted small mb-3">
+                    Erase all enrolled students, attendance sessions, and examination marks to start a fresh academic term.
+                </p>
+                <form method="POST" action="{{ url_for('settings_view') }}" onsubmit="return confirm('CAUTION: This will delete ALL student records, attendance logs, and exam marks. Continue?');">
+                    <input type="hidden" name="action" value="reset_data">
+                    <button type="submit" class="btn btn-danger btn-sm w-100 py-2">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Clear School Records
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
