@@ -1050,4 +1050,4 @@ if __name__ == '__main__':
     print(" Principal Login:      admin      / admin123")
     print(" Class Teacher (3-A):  teacher3a  / teach123")
     print("==================================================================")
-    app.run(debug=True, host='127.0.0.1', port=7070)
+    app.run(debug=True, host='0.0.0.0', port=7070)
